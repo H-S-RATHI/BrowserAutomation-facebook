@@ -1,17 +1,19 @@
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+from tkinter import ttk, filedialog, messagebox, scrolledtext
 from datetime import datetime
 import json
 import os
 from PIL import Image, ImageTk
 from io import BytesIO
 import base64
+import threading
+from gemini_utils import enhance_description
 
 class PostCreatorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Facebook Post Creator")
-        self.root.geometry("800x600")
+        self.root.title("Facebook Post Creator with AI Enhancement")
+        self.root.geometry("900x650")
         
         # Styling
         self.style = ttk.Style()
@@ -30,10 +32,40 @@ class PostCreatorApp:
         main_frame = ttk.Frame(self.root, padding="10")
         main_frame.pack(fill=tk.BOTH, expand=True)
         
-        # Description
-        ttk.Label(main_frame, text="Post Description:").pack(anchor=tk.W, pady=(0, 5))
-        self.description_text = tk.Text(main_frame, height=5, font=('Arial', 10))
-        self.description_text.pack(fill=tk.X, pady=(0, 10))
+        # Description frame
+        desc_frame = ttk.Frame(main_frame)
+        desc_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        # Description label and enhance button
+        desc_header = ttk.Frame(desc_frame)
+        desc_header.pack(fill=tk.X)
+        
+        ttk.Label(desc_header, text="Post Description:").pack(side=tk.LEFT)
+        
+        # Add Enhance button
+        self.enhance_btn = ttk.Button(
+            desc_header, 
+            text="✨ Enhance with AI", 
+            command=self.enhance_description,
+            style='Accent.TButton'
+        )
+        self.enhance_btn.pack(side=tk.RIGHT, padx=5)
+        
+        # Description text area with scrollbar
+        desc_container = ttk.Frame(desc_frame)
+        desc_container.pack(fill=tk.BOTH, expand=True)
+        
+        self.description_text = scrolledtext.ScrolledText(
+            desc_container, 
+            height=5, 
+            font=('Arial', 10),
+            wrap=tk.WORD
+        )
+        self.description_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Loading indicator
+        self.loading_label = ttk.Label(desc_frame, text="Enhancing description...")
+        self.loading_label.pack_forget()
         
         # Photo selection
         photo_frame = ttk.LabelFrame(main_frame, text="Photos", padding=10)
@@ -142,6 +174,45 @@ class PostCreatorApp:
                 widget.destroy()
             self.photo_previews.clear()
     
+    def enhance_description(self):
+        """Enhance the description using Gemini AI"""
+        description = self.description_text.get("1.0", tk.END).strip()
+        
+        if not description:
+            messagebox.showinfo("Empty Description", "Please enter a description to enhance.")
+            return
+            
+        # Disable buttons during processing
+        self.enhance_btn.config(state=tk.DISABLED)
+        self.save_btn.config(state=tk.DISABLED)
+        self.loading_label.pack(pady=5)
+        
+        # Run enhancement in a separate thread to keep the UI responsive
+        def enhance_thread():
+            try:
+                enhanced = enhance_description(description)
+                if enhanced:
+                    self.root.after(0, self._update_description, enhanced)
+                else:
+                    self.root.after(0, lambda: messagebox.showerror("Error", "Failed to enhance description. Please try again."))
+            except Exception as e:
+                self.root.after(0, lambda: messagebox.showerror("Error", f"An error occurred: {str(e)}\n\nMake sure you've set up your Gemini API key in gemini_config.py"))
+            finally:
+                self.root.after(0, self._enable_enhance_ui)
+        
+        threading.Thread(target=enhance_thread, daemon=True).start()
+    
+    def _update_description(self, text):
+        """Update the description text area with enhanced text"""
+        self.description_text.delete("1.0", tk.END)
+        self.description_text.insert("1.0", text)
+    
+    def _enable_enhance_ui(self):
+        """Re-enable UI elements after enhancement"""
+        self.enhance_btn.config(state=tk.NORMAL)
+        self.save_btn.config(state=tk.NORMAL)
+        self.loading_label.pack_forget()
+    
     def save_post(self):
         description = self.description_text.get("1.0", tk.END).strip()
         
@@ -152,13 +223,25 @@ class PostCreatorApp:
         # Create posts directory if it doesn't exist
         os.makedirs('posts', exist_ok=True)
         
-        # Create post data
+        # Save post data to JSON file
         post_data = {
-            'description': description,
-            'photos': [os.path.abspath(photo) for photo in self.photos],
-            'created_at': datetime.now().isoformat(),
-            'posted': False
+            'description': self.description_text.get('1.0', tk.END).strip(),
+            'photos': [],
+            'photos_data': [],  # Store base64 encoded image data
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
+        
+        # Add photo data as base64
+        for photo_path in self.photos:
+            try:
+                with open(photo_path, 'rb') as img_file:
+                    img_data = base64.b64encode(img_file.read()).decode('utf-8')
+                    post_data['photos_data'].append({
+                        'filename': os.path.basename(photo_path),
+                        'data': img_data
+                    })
+            except Exception as e:
+                print(f"Error reading photo {photo_path}: {str(e)}")
         
         # Create a filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
