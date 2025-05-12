@@ -57,7 +57,7 @@ class PostCreatorApp:
         
         self.description_text = scrolledtext.ScrolledText(
             desc_container, 
-            height=5, 
+            height=10, 
             font=('Arial', 10),
             wrap=tk.WORD
         )
@@ -69,7 +69,8 @@ class PostCreatorApp:
         
         # Photo selection
         photo_frame = ttk.LabelFrame(main_frame, text="Photos", padding=10)
-        photo_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
+        # only stretch horizontally, not vertically:
+        photo_frame.pack(fill=tk.X, expand=False, pady=(10, 0))
         
         # Buttons frame
         btn_frame = ttk.Frame(photo_frame)
@@ -96,7 +97,8 @@ class PostCreatorApp:
         self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
         self.canvas.configure(xscrollcommand=self.scrollbar.set)
         
-        self.canvas.pack(fill=tk.BOTH, expand=True)
+        self.canvas.config(height=190)
+        self.canvas.pack(fill=tk.X, expand=False)
         self.scrollbar.pack(fill=tk.X, pady=(5, 0))
         
         # Save button
@@ -127,7 +129,7 @@ class PostCreatorApp:
         try:
             # Open and resize image for preview
             img = Image.open(filename)
-            img.thumbnail((150, 150), Image.Resampling.LANCZOS)
+            img.thumbnail((75, 75), Image.Resampling.LANCZOS)
             
             # Convert to PhotoImage
             photo = ImageTk.PhotoImage(img)

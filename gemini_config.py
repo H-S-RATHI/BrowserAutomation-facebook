@@ -7,7 +7,7 @@ Gemini API Configuration
 """
 
 # Gemini API Configuration
-GEMINI_API_KEY = 'AIzaSyByhHWNhRJJar25MgTmNNUxeOcSltAm9Q8'  # Replace with your actual API key
+GEMINI_API_KEY = 'AIzaSyDDZOfwhSiVKZLwdqsNRvnwO99nEG7Kbh0Q'  # Replace with your actual API key
 
 # Model configuration
 GEMINI_MODEL = 'gemini-2.0-flash'  # or 'gemini-1.5-flash' for faster responses
@@ -25,8 +25,7 @@ ENHANCE_PROMPT = """
 Rewrite this social media post to sound completely natural and human-written. 
 Make it engaging and conversational, just like a real person would write. 
 Keep it casual, use natural language, and avoid any AI-sounding phrases. 
-Maintain the original meaning but make it sound authentic and spontaneous. 
-Add a few relevant emojis if appropriate, but don't overdo it. 
+Maintain the original meaning but make it sound authentic and spontaneous.  
 Keep it concise (1-2 short paragraphs max).
 
 Original post:

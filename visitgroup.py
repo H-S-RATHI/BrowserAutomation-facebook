@@ -15,8 +15,6 @@ from datetime import datetime
 # List of Facebook group URLs to visit
 GROUP_LINKS = [
     "https://www.facebook.com/groups/242194011192582",
-    "https://www.facebook.com/groups/brahmacharyafsr",
-    "https://www.facebook.com/groups/581147559939258"
     # Add more group links here as needed
 ]
 
@@ -26,13 +24,13 @@ def get_latest_post():
     posts_dir = os.path.join(os.path.dirname(__file__), 'posts')
     if not os.path.exists(posts_dir):
         print("No posts directory found!")
-        return None
+        return None, None
     
     # Get all JSON files in posts directory
     post_files = [f for f in os.listdir(posts_dir) if f.endswith('.json')]
     if not post_files:
         print("No post files found!")
-        return None
+        return None, None
     
     # Sort by creation time (newest first)
     post_files.sort(key=lambda x: os.path.getmtime(os.path.join(posts_dir, x)), reverse=True)
@@ -43,7 +41,48 @@ def get_latest_post():
         post_data = json.load(f)
     
     print(f"Loaded post: {latest_post}")
-    return post_data
+    return post_data, os.path.join(posts_dir, latest_post)
+
+def move_to_posted_folder(post_path):
+    """
+    Move the posted file to the 'already_posted' folder which is parallel to 'posts' folder
+    
+    Args:
+        post_path: Full path to the post file to be moved
+    """
+    try:
+        # Get the parent directory of 'posts' folder
+        posts_dir = os.path.dirname(post_path)
+        parent_dir = os.path.dirname(posts_dir)
+        
+        # Create 'already_posted' directory parallel to 'posts' folder
+        posted_dir = os.path.join(parent_dir, 'already_posted')
+        os.makedirs(posted_dir, exist_ok=True)
+        
+        # Create timestamped subfolder
+        timestamp = datetime.now().strftime("%Y%m%d")
+        date_dir = os.path.join(posted_dir, timestamp)
+        os.makedirs(date_dir, exist_ok=True)
+        
+        # Move the file
+        filename = os.path.basename(post_path)
+        new_path = os.path.join(date_dir, filename)
+        
+        # Handle case where file already exists
+        counter = 1
+        name, ext = os.path.splitext(filename)
+        while os.path.exists(new_path):
+            new_filename = f"{name}_{counter}{ext}"
+            new_path = os.path.join(date_dir, new_filename)
+            counter += 1
+        
+        os.rename(post_path, new_path)
+        print(f"Moved post to: {new_path}")
+        return True
+        
+    except Exception as e:
+        print(f"Error moving post file: {str(e)}")
+        return False
 
 def post_to_group(driver, post_data):
     """Post content to the current group"""
@@ -232,8 +271,8 @@ def visit_groups(driver, group_links=None):
         print("Starting Facebook Groups automation...")
         
         # Load the post to share
-        post_data = get_latest_post()
-        if not post_data:
+        post_data, post_path = get_latest_post()
+        if not post_data or not post_path:
             print("No post data found to share!")
             return
             
@@ -327,3 +366,8 @@ def visit_groups(driver, group_links=None):
     except Exception as e:
         print(f"An error occurred in visit_groups: {e}")
         raise  # Re-raise the exception to be handled by the calling function
+    
+    # If we got here, posting to all groups was successful
+    # Move the post to 'already_posted' folder
+    print("\nSuccessfully posted to all groups. Moving post to 'already_posted' folder...")
+    move_to_posted_folder(post_path)
