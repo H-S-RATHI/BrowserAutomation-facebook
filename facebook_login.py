@@ -40,7 +40,7 @@ def human_like_behavior(driver):
         ]
         
         # Random wait times between actions
-        wait_times = [1, 2, 3, 4,5,6,7,8,9,10,11]
+        wait_times = [3,4,5,6,7,8,9,10,11,12,13,14,15]
         
         # Perform some random actions
         for _ in range(random.randint(2,4)):
@@ -102,7 +102,7 @@ def facebook_login(driver):
             if is_logged_in(driver):
                 logged_in = True
                 break
-            time.sleep(5)  # Check every 5 seconds
+            time.sleep(random.randint(3,11))  # Check every 5 seconds
         
         if not logged_in:
             print("\nLogin timeout reached. Please make sure you're logged in.")

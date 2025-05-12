@@ -2,12 +2,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 import time
 import os
 import json
 import base64
 import random
+from selenium.webdriver.common.action_chains import ActionChains
 from datetime import datetime
 
 
@@ -55,7 +56,7 @@ def post_to_group(driver, post_data):
         ))
         post_box.click()
         print("Clicked on post box")
-        time.sleep(3)  # Wait for post form to appear
+        time.sleep(random.uniform(3, 7))  # Wait for post form to appear
         
         # Find the description input field and type the post content
         try:
@@ -80,9 +81,9 @@ def post_to_group(driver, post_data):
             try:
                 # Focus and clear the field
                 desc_input.click()
-                time.sleep(1)
+                time.sleep(random.uniform(1, 7))
                 desc_input.clear()
-                time.sleep(1)
+                time.sleep(random.uniform(1, 7))
                 
                 # Type character by character with small delay
                 for char in cleaned_description:
@@ -96,7 +97,7 @@ def post_to_group(driver, post_data):
                 return False
             
             print("Typed description using JavaScript")
-            time.sleep(2)
+            time.sleep(random.uniform(2, 7))
             
             # Handle photos by pasting them directly into the post
             photos_to_process = []
@@ -125,7 +126,7 @@ def post_to_group(driver, post_data):
                     # Click to focus the post box again
                     print("Focusing post box...")
                     desc_input.click()
-                    time.sleep(1)
+                    time.sleep(random.uniform(1, 7))
                     
                     # Import required modules
                     from selenium.webdriver.common.keys import Keys
@@ -133,7 +134,7 @@ def post_to_group(driver, post_data):
                     # Press Enter to create a new line before pasting photos
                     print("Adding new line for photos...")
                     desc_input.send_keys(Keys.ENTER)
-                    time.sleep(1)
+                    time.sleep(random.uniform(1, 7))
                     
                     # Paste each photo
                     for i, photo_path in enumerate(photos_to_process, 1):
@@ -178,7 +179,7 @@ def post_to_group(driver, post_data):
                             if i < len(post_data['photos']):
                                 desc_input.send_keys(Keys.ENTER)
                             
-                            time.sleep(2)  # Wait for image to process
+                            time.sleep(random.uniform(2, 7))  # Wait for image to process
                             
                         except Exception as img_error:
                             print(f"Error pasting photo {photo_path}: {str(img_error)}")
@@ -208,7 +209,7 @@ def post_to_group(driver, post_data):
             ))
             post_btn.click()
             print("Clicked post button")
-            time.sleep(5)  # Wait for post to complete
+            time.sleep(random.uniform(5, 11))  # Wait for post to complete
             return True
             
         except Exception as e:
@@ -251,18 +252,6 @@ def visit_groups(driver, group_links=None):
         
         print("Looking for Groups link...")
         
-        # Wait for the Groups link to be clickable
-        wait = WebDriverWait(driver, 30)
-        groups_link = wait.until(EC.element_to_be_clickable(
-            (By.XPATH, "//span[contains(text(),'Groups')]")
-        ))
-        
-        print("Clicking on Groups...")
-        groups_link.click()
-        time.sleep(3)  # Wait for groups page to load
-        
-        print("Successfully navigated to Groups.")
-        
         # Dictionary to store group URL and its count
 
         
@@ -274,7 +263,31 @@ def visit_groups(driver, group_links=None):
                 
                 # Navigate to the group
                 driver.get(group_url)
-                time.sleep(5)  # Wait for the group page to load
+                
+                # Human-like behavior after page load
+                print("Simulating human-like behavior...")
+                
+                # Random wait to mimic human reading/processing time
+                time.sleep(random.uniform(3, 11))
+                
+                # Random scrolling behavior
+                scroll_actions = [
+                    lambda: driver.execute_script("window.scrollBy(0, 500);"),
+                    lambda: driver.execute_script("window.scrollBy(0, 800);"),
+                    lambda: driver.execute_script("window.scrollBy(0, 300);"),
+                    lambda: driver.execute_script("window.scrollBy(0, 1000);"),
+                ]
+                
+                # Perform 2-4 random scrolls
+                for _ in range(random.randint(2, 7)):
+                    random.choice(scroll_actions)()
+                    time.sleep(random.uniform(1, 11))  # Random pause between scrolls
+                    
+                
+                
+                # Scroll back to top
+                driver.execute_script("window.scrollTo(0, 200);")
+                time.sleep(random.uniform(1, 11))
                 
                 # Check if we're in the group (not redirected to login or error page)
                 if "groups/join" in driver.current_url or "login" in driver.current_url:
@@ -289,7 +302,7 @@ def visit_groups(driver, group_links=None):
                     print(f"Failed to post to group {i}")
                 
                 # Random delay between posts (30-90 seconds) to avoid detection
-                delay = random.randint(30, 90)
+                delay = random.uniform(30, 90)
                 print(f"Waiting for {delay} seconds before next post...")
                 time.sleep(delay)
                 
@@ -307,7 +320,7 @@ def visit_groups(driver, group_links=None):
                     print("Could not save screenshot")
                 
                 # Random delay before next attempt
-                time.sleep(random.randint(10, 30))
+                time.sleep(random.uniform(10, 30))
                 continue  # Continue with the next group if there's an error
         
         
